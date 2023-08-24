@@ -1,0 +1,43 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\title{Brute-Forcing a small CRT-RSA exponent}
+\setlength\parindent{0pt}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+In this challenge, we can ask the server to decrypt any RSA-cipher in two modes, either using the regular strategy or an optimized version leveraging the CRT-RSA. The difference in runtime is quite large, so the hint must be that there is something up with the CRT variant that we can exploit. (A few more details about CRT-RSA will follow once I have progressed more in my studying journey for this class. For now, suffice it to say that it involves computing a few auxiliary parameters in the RSA setup phase and using these auxiliary parameters for faster decryption). 
+
+\section{The Brute-Force-Approach to Solving it}
+
+A bit of digging turns up a \href{https://bitsdeep.com/posts/attacking-rsa-for-fun-and-ctf-points-part-4/}{blog-post} which describes a few apparently rather basic attacks on RSA. One of them is a brute-forcing attack on small CRT-RSA exponents. I will repeat what the author is saying there to better understand. But essentially, it's all Fermat's little theorem: if $p$ is a prime and $a$ is an integer co-prime to $p$, then $a^{p-1} \equiv 1$ (mod $p$). This specific statement is a consequence of the theorem's general statement (which does not require $p$ and $a$ to be co-prime) $a^p \equiv a$ (mod $p$).
+
+\medskip
+
+Two of the auxiliary parameters computed in the setup phase of CRT-RSA are $d_p$ and $d_q$. They are chosen so that $d_p \equiv e^{-1}$ (mod $p$-1) and $d_q \equiv e^{-1}$ (mod $q$-1). In this attack, the assumption is that $d_p$ or $d_q$ is so small that it can be found with brute force. The key point of course is: how do we verify our guess? Looking at the definition of $d_p$, we can derive that $d_p*e \equiv 1$ (mod $p$-1), or stated differently, $d_p*e = 1+k*(p-1)$. This is where Fermat's little theorem comes in! 
+
+\medskip
+
+Fermat's little theorem now tells us that for any number $m$ co-prime to $p$ (i.e., $gcd(m,p)=1$), we have that
+
+\begin{align*}
+    m^{e*d_p} &= m^{1+k*(p-1)}\\
+              &= m*m^{(p-1)^k}\\
+              &\equiv m*1^k  \\
+              &\equiv m \text{(mod $p$)}
+\end{align*}
+
+Consequently, $m^{e*d_p} \equiv m$ (mod $p$), i.e., $m-m^{e*d_p} = k*p$. 
+
+\medskip
+
+The approach thus consists in guessing values for $d_p$ and $m < n$ and computing $gcd(m-m^{e*d_p},n)$. Since $m-m^{e*d_p}$ is divisible by $p$ if the guess is correct, the result will be $p$ for a hit. See the blog post linked above for a code example. \href{https://www.youtube.com/watch?v=i7KtIHyHCgE} {this YouTube video} has another brute force approach, which I copied into brute-force.py.
+
+\section{The Efficient Exotic Approach to Solving it}
+
+The brute-force approach takes a long time. I was not sure it would work, and so I kept searching. I found \href{https://ctftime.org/writeup/27022}{this write-up}, and \href{https://github.com/rkm0959/rkm0959_implements/tree/main/Sqrt_Attack_CRT-RSA}{this repo on GitHub}. The approach detailed in these harnesses SageMath and does some magical multi-point evaluation of polynomial trees. Obviously I do not understand one bit, but I copied it and it worked in a rather speedy manner (apparently $O(min(\sqrt(d_p), \sqrt(d_q)))$)! See the factor-sage.py script, and then crack.py for how I proceeded to grab the flag once $N$ had been factored.
+
+\end{document}
