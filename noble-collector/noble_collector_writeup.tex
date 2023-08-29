@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\title{Performing a Hast{\aa}d's Broadcast Attack in the \emph{general} case.}
+\setlength\parindent{0pt}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The collector challenge asked us to mount Hast{\aa}d's Broadcast Attack in the simplest scenario where we have some small public exponent $e$ (typically $e=3$) and $e$ ciphers corresponding to the same message encrypted with $e$ and (generally) co-prime moduli $n_i$. In the general version of the attack, the messages are no longer identical, but polynomially transformed versions of each other. \medskip
+
+Conveniently, I wrote a script for ``harvesting'' the required data from the server as it is a bit more cumbersome to come by than in the collector challenge. Here, the server responds to a single request with the name of a guest and their public key. The messages then are of the form ``Dear GUEST flag\{its\_lit\_l0l\}''. 
+Since the messages thus differ based on the names of the guests, I figured it would be best to find three messages encrypted with public exponent $e=3$ and with equally long guest-names. We'll see how this helps below. See collect.py for the collection part of the challenge.
+
+\section{H{\aa}stad's Broadcast - general version ft. Coppersmith}
+
+From the lecture slides: let's look at the theorem underlying the General Hast{\aa}d broadcast, as well as its proof.\medskip
+
+\emph{Thm.} Let $n_i$ be co-prime. Assume we modify some base message via $m_i=f_i(m)$, for $i \in \{1,...,k\}$ and known polynomials $f_i$. If 
+
+\begin{align*}
+    k \geq e \times max\{deg(f_i): i \in \{1,...,k\}\},
+\end{align*}
+
+then we can recover $m$ from the $f_i$ and $c_i=m_i^{e}$ mod $n_i$. The corollary naturally is that any fixed padding scheme becomes dangerous, given enough messages. Use randomised padding. - Now the proof (also from the lecture slides)!\medskip
+
+\begin{enumerate}
+    \item Put $g_i(x)=f_i(x)^{e}-c_i$, so all $g_i(m) \equiv 0$ mod $n_i$. Note: $deg(g_i)=e \cdot deg(f_i) \leq k$.
+    \item Using the Chinese Remainder Theorem, compute $T_i$ so that $T_i \equiv 1$ mod $n_i$ and $T_i \equiv 0$ mod $n_j$ for $i \neq j$ and put
+        \begin{align*}
+            g(x) := \sum_{i=1}^{k} T_i \cdot g_i(x)
+        \end{align*} 
+        adding degree $\leq k$, so $\deg(g) \leq k$
+    \item Now, $g(m) \equiv 0$ mod $n_i$ for all $i$:
+        \begin{enumerate}
+            \item summands $j \neq i$ vanish because of $T_j$
+            \item summand $i$ vanishes by the definition of $g_i$
+        \end{enumerate}
+    \item By CRT, $g(m) \equiv 0$ mod $\prod n_i$: 
+        \begin{align*}
+            m < \min n_i < (\prod n_i)^{\frac{1}{k}} \leq (\prod n_i)^{\frac{1}{deg(g)}}
+        \end{align*}
+    \item ... so we find $m$ via Coppersmith.  
+\end{enumerate}
+
+Now, I should probably quickly say what Coppersmith is all about? Basically, Coppersmith showed that we can find all roots of a polynomial with degree $e$ and computations mod $n$ in polynomial time. A root of a polynomial is a value for which the entire thing becomes zero (0 mod $n$ in this case). The only condition that must hold for root $x_0$ to be found in polynomial time is that $|x_0| \leq \sqrt[e]{n}$. \medskip
+
+So what do we do in our case? We know the general form of each plaintext (``Dear GUEST flag\{its\_lit\_l0l\}''), and we have collected 3 samples where $e=3$ and the lengths of the three names are equal. We know how long the ``Dear GUEST'' part is, but obviously we do not know how long the flag is. Now the reasoning is this: for each of the ciphertexts, we know that the following condition holds: $c_i = (hex(``Dear \medspace GUEST\_NAME'') \cdot 2^{8 \cdot x} + hex(flag))^3$. Knowing this, we can apply the procedure given in the proof above.
+
+\section{Disclaimer}
+
+Sadly, I did not capture the flag for this challenge! I did succeed however in cracking mocked data I generated myself (see general\_hastad\_test\_prep.py and general\_hastad\_test.sage). I probably made some tiny mistake in the data collection of something and did not consider it worth my time to find it given that my method worked on a sanity check example.
+
+\end{document}
