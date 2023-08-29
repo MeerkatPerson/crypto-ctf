@@ -45,9 +45,9 @@ then we can recover $m$ from the $f_i$ and $c_i=m_i^{e}$ mod $n_i$. The corollar
     \item ... so we find $m$ via Coppersmith.  
 \end{enumerate}
 
-Now, I should probably quickly say what Coppersmith is all about? Basically, Coppersmith showed that we can find all roots of a polynomial with degree $e$ and computations mod $n$ in polynomial time. A root of a polynomial is a value for which the entire thing becomes zero (0 mod $n$ in this case). The only condition that must hold for root $x_0$ to be found in polynomial time is that $|x_0| \leq \sqrt[e]{n}$. \medskip
+Now, I should probably quickly say what Coppersmith is all about? Basically, Coppersmith showed that we can find all roots of a polynomial with degree $e$ that lives in the mod $n$ world in polynomial time. A root of a polynomial is a value for which the entire thing becomes zero (0 mod $n$ in this case). The only condition that must hold for root $x_0$ to be found in polynomial time is that $|x_0| \leq \sqrt[e]{n}$. \medskip
 
-So what do we do in our case? We know the general form of each plaintext (``Dear GUEST flag\{its\_lit\_l0l\}''), and we have collected 3 samples where $e=3$ and the lengths of the three names are equal. We know how long the ``Dear GUEST'' part is, but obviously we do not know how long the flag is. Now the reasoning is this: for each of the ciphertexts, we know that the following condition holds: $c_i = (hex(``Dear \medspace GUEST\_NAME'') \cdot 2^{8 \cdot x} + hex(flag))^3$. Knowing this, we can apply the procedure given in the proof above.
+So what do we do in our case? We know the general form of each plaintext (``Dear GUEST flag\{its\_lit\_l0l\}''), and we have collected 3 samples where $e=3$ and the lengths of the three names are equal. We know how long the ``Dear GUEST'' part is, but obviously we do not know how long the flag is. Now the reasoning is this: for each of the ciphertexts, we know that the following condition holds: $c_i = (hex(``Dear \medspace GUEST\_NAME'') \cdot 2^{8 \cdot x} + hex(flag))^3$. Knowing this, we can apply the procedure given in the proof above, trying many values for $x$ (essentially brute-forcing the length of the flag).
 
 \section{Disclaimer}
 
