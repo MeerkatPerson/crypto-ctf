@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\title{Wiener's attack on small private RSA exponent}
+\setlength\parindent{0pt}
+\begin{document}
+\maketitle
+
+\section{Explanation from YouTube}
+
+A really nice explanation from \href{https://www.youtube.com/watch?v=OpPrrndyYNU}{Jeff Suzuki on YouTube}. I transcribed it and added some extra comments. \medskip
+
+Recall the basic components of RSA: 
+
+\begin{enumerate}
+    \item a \emph{public} encryption exponent $e$ and public modulus $N$,
+    \item a \emph{private} decryption exponent $d$ and factorization $N=pq$,
+    \item where $ed=k\phi(N)+1$, i.e., $e$ and $d$ are each other's modular inverse wrt modulus $\phi(N)$ ($\phi(N)=(p-1)(q-1)$ since $p$ and $q$ are primes).
+\end{enumerate}
+
+Note then that what we need to break the thing given the public key is $\phi(N)$, and not the actual factorization of $N$. This idea is the basis of Wiener's attack.
+
+\begin{align*}
+    \phi(N) &= (p-1)(q-1)\\
+     &= pq-(p+q)+1\\
+     &\approx N
+\end{align*}
+
+To summarize, since $p$ and $q$ are large, $\phi(N)$ is reasonably close to $N$. But then, we can solve the equation $ed=k\phi(N)+1$ as follows:
+
+\begin{align*}
+    ed - k\phi(N) &= 1\\
+     \frac{e}{\phi(N)}-\frac{k}{d}&=\frac{1}{d\phi(N)}\\
+     \frac{e}{N}&\approx \frac{k}{d}
+\end{align*}
+
+In the first step, we divided both sides by $d\phi(N)$. Then, since $\frac{1}{d\phi(N)}$ is tiny enough to approach zero, we concluded that $\frac{e}{N}$ is approximately equal to $\frac{k}{d}$. \medskip
+
+Now we'll try to find $\frac{e}{N}$ using the theorem of continued fractions: we're going to try and find a set of fractions (the \emph{convergents}) $\frac{k}{d}$ that approximate $\frac{e}{N}$. We intend to save ourselves a lot of trouble by making the following observations:
+
+\begin{enumerate}
+    \item Since $ed \equiv 1 \mod \phi(N)$, and $\phi(N)$ will be an even number (this is because $p$ and $q$ are large primes and thus odd - 2 is the only even prime number - $(p-1)$ as well as $(q-1)$ are even, and so is their product), $d$ must be odd since if it were even, $ed$ wouldn't be equal to $k\phi(N) + 1$, which is an odd number. Thus, if we find a convergent where the denominator $d$ is odd, we will move on to the next.
+    \item Since $\phi(N)$ must be a whole number, we'll check $\frac{ed-1}{k}$. If this isn't a whole number, we'll move on to the next convergent.
+\end{enumerate}
+
+So, for all convergents where these two exclusion criteria don't apply and we thus have found a potential candidate for $d$, how do we check if we have indeed found the right value? This is where we'll harness the theory of quadratic equations. Suppose $p$, $q$ are the primes whose product is $N$. Then we have:
+
+\begin{align*}
+    \phi(N) &= (p-1)(q-1)\\
+     \phi(N) &= pq - (p+q) + 1 \\
+     \phi(N) &= N - (p+q) + 1 \\
+     p+q &= N - \phi(N) + 1
+\end{align*}
+
+Now consider the quadratic equation $(x-p)(x-q)$, whose roots are $p$, $q$, the prime factors of $N$. We have:
+
+\begin{align*}
+    (x-p)(x-q) &= 0 \\
+    x^2 - (p+q)x + pq &= 0
+\end{align*}
+
+There are a few things of note about this equation: firstly, $pq=N$; secondly, as we've seen above, $p+q=N-\phi(N)+1$. Thus:
+
+\begin{align*}
+    x^2 - (N-\phi(N)+1)x + N &= 0
+\end{align*}
+
+If we've found the correct value for $\phi(N)$, then the roots of this equation will be whole numbers, and the factors of $N$.
+
+\section{Proof seen in class at TUB}
+
+Wiener's assumptions:
+
+\begin{enumerate}
+    \item $q<p<aq$
+    \item $e<\phi(N)$
+    \item $d<\frac{1}{\sqrt{2(a+1)}}n^\frac{1}{4}$
+\end{enumerate}
+
+Then, the error between $N$ and $\phi(N)$ is:
+
+\begin{align*}
+    0           &< N - \phi(N) \\
+    N - \phi(N) &= pq - (p-1)(q-1) \\
+                &= pq - pq - (p+q) + 1 \\
+                &= (p+q) + 1 \\
+    (p+q) + 1   &< (a+1)q \\
+    (a+1)q      &\leq (a+1)\sqrt{N}
+\end{align*}
+
+Where we used assumption one from above: $(p+q)<aq+q$ as well as the fact that $q\approx\sqrt{N}$ since $N=pq$. $a$ is some small number, e.g. 2.\medskip
+
+For the error between the fractions, we have:
+
+\begin{align*}
+    |\frac{e}{n}-\frac{k}{d}| &= |\frac{ed-k\phi(N)-kn+k\phi(N)}{Nd}| \\
+                              &= |\frac{1-k(N-\phi(N))}{nd}| < \frac{(a+1)k\sqrt{N}}{Nd} = \frac{(a+1)k}{d\sqrt{N}}  \\
+    |\frac{e}{n}-\frac{k}{d} &< \frac{a+1}{\sqrt{N}}\leq \frac{a+1}{2(a+1)d^2}=\frac{1}{2d^2}
+\end{align*}
+
+In line one, we did the standard expansion to achieve a common denominator, and then used a classic Mathematician's trick: we added and subtracted $k\phi(N)$, i.e., we added zero. \smallskip
+
+This helps us because now we can use the fact that $ed \equiv 1 \mod \phi(N)$, and thus $ed-k\phi(N)=1$. That's how we get to line two. \smallskip
+
+Then, we use the result from above: $N-\phi(N)\leq (a+1)\sqrt(N)$. \smallskip
+
+For the last step in line two, we simply divide by $\sqrt(N)$. \smallskip
+
+Then, to get to line three, we use: $k\phi(N)=ed-1$ and $e < \phi(N) \implies k < d$.\smallskip
+
+All of this to arrive at the magical value $\frac{1}{2d^2}$, which tells us that $\frac{k}{d}$ is a continued fraction of $\frac{e}{n}$.
+
+\end{document}
