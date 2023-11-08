@@ -1,0 +1,47 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\title{Signature Forgery Attack on RSA with small $e$}
+\setlength\parindent{0pt}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Ok, boss move: finally a challenge that requires everyone's favorite language \texttt{C} (and thus a library for working with big integers, since unlike \texttt{Python}, \texttt{C} does not support them natively)! We require \texttt{C} because it has a specific way of comparing strings: the \texttt{strcmp} function compares two strings character by character \emph{until} either a pair of differing characters is found \emph{or} a terminating null-character is found in one of the two strings. If all characters were equal up until that null-character, then \texttt{C} will consider the two strings equal even though we as humans probably wouldn't consider e.g., ``smorgasbord\textbackslash0'' and ``smorg\textbackslash0'' to be identical. Another quick reminder about \texttt{C}: there are no booleans, so 0 means \texttt{false} and 1 means \texttt{true}. Therefore, the statement 
+
+\begin{center}
+    \texttt{if ! strcmp(char* str1, char* str2) (...)}
+\end{center}
+
+asks whether \texttt{strcmp} returned 0, which it does when the two strings under comparison indeed are equal.
+
+\medskip
+
+Ok, that was the \texttt{C}-specifics! What do we actually want to do? Our task is to sign a random message specified by the server. We have access to the public key (and thus $e$ as well as the modulus $n$), but not the private exponent $d$, which is (ideally) required for signing!
+
+\section{The Solution}
+
+It now is probably a good time to admit that I do not fully understand why this attack works, and digging around in the WWW didn't deliver much - maybe Henning came up with this himself? Anywho, algorithm \ref{algo} describes how we go about solving it.
+
+\medskip
+
+\begin{algorithm}
+    \begin{algorithmic}[1]
+    \While{$||msg|| < log \medspace n$}\Comment{log n = length of n in binary}
+    \State $\text{msg += ´b\textbackslash x00´}$
+    \State $m = int(msg)$
+    \State $s = \lceil \sqrt[e]{m} \rceil$
+    \If{$\text{\textbf{not}} \medspace strcmp(msg, str(s^e))$}
+        \State \textbf{return} $s$
+    \EndIf
+    \EndWhile
+    \end{algorithmic}\label{algo}
+\end{algorithm}
+
+Since the server checks the correctness of the signature we proffer by raising it to the public exponent $e=3$ and comparing the result to the original message via $strcmp$, we keep appending zero-bytes to the original message until we have found a perfect cube. Apparently we are very likely to succeed in this, and this is the point where I lack understanding - why are we bound to find a perfect cube when we keep appending zeroes? Are perfect cubes just so common? That would be an explanation. Once we have managed to append a certain number of zero-bytes to the original message so that the result (in integer representation, of course) is a perfect cube, we know that when we present the server with a ``signature'' corresponding to the third root of this perfect cube we will succeed: raising the ``signature'' to the power of $e=3$ produces the original message with appended zeroes, which will pass the $strcmp$-check when compared to the original message, and we're done.
+
+\end{document}
