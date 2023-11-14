@@ -1,0 +1,34 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+\title{Fermat Factorization}
+\setlength\parindent{0pt}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+This challenge is pretty bare-bones: we are given $n$, $e$, and a ciphertext $c$. Since the challenge title is \emph{Factorisez-Moi}, our task seems to consist in factoring $n$, thus breaking RSA and decrypting the ciphertext to obtain the flag.
+
+\section{The Solution}
+
+Closer inspection of the script used for generating the challenge \\ (\texttt{factorisez-moi.py}) reveals that $p$ and $q$, the prime factors of $n$, are pretty close - the construction actually ensures that they will nearly be the same in the upper half of bits ($p$ is 1024 bits, and $q$ is obtained by adding a random number of about half that bit size to $p$). This means that one of the simplest strategies for factoring will work, and that is \emph{Fermat Factorization}!
+
+\begin{algorithm}
+    \begin{algorithmic}[1]
+    \State $m \leftarrow \lceil \sqrt{n} \rceil$
+    \For{$i \in N$}
+    \State $\Delta_{i} = \sqrt{(m+i)^2 - n}$
+    \If{$\Delta_{i} \in N$}
+        \State \textbf{return} $p \leftarrow m + i - \Delta_i$
+    \EndIf
+    \EndFor
+    \end{algorithmic}\label{algo}
+\end{algorithm}
+
+This works because (odd) $n=pq$ can be expressed as a difference of squares: $n = (\frac{p+q}{2})^2 - (\frac{p-q}{2})^2$. When the algorithm exits, $\Delta_{i} = \frac{p-q}{2}$, which is precisely the case when $m+i = \frac{p+q}{2}$. The number of steps required for the algorithm to finish is the smaller, the closer $p$ and $q$ are. I used an implementation found on the internet, see code and source in \texttt{fermat.py}.
+
+\end{document}
